@@ -1,12 +1,14 @@
 package com.example.natwestassignment.controller;
 
 import com.example.natwestassignment.model.Student;
+import com.example.natwestassignment.repository.StudentRepository;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -28,6 +30,9 @@ public class StudentController {
     List<Student> students = new ArrayList<Student>();
 
     static String SHEET = "Sheet1";
+
+    @Autowired
+    StudentRepository studentRepository;
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
     public String studentStatus(@RequestParam("Enter Rollno for Student's Status") long rollNo) {
@@ -96,6 +101,7 @@ public class StudentController {
 
                     cellIdx++;
                 }
+                studentRepository.save(student);
                 students.add(student);
 
             }
