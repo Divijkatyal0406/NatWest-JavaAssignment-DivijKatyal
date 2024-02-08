@@ -3,10 +3,7 @@ package com.example.natwestassignment.controller;
 import com.example.natwestassignment.model.Student;
 import com.example.natwestassignment.repository.StudentRepository;
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -53,12 +50,16 @@ public class StudentController {
             Sheet sheet = workbook.getSheet(SHEET);
             Iterator<Row> rows = sheet.iterator();
 
+            Row firstRow = rows.next();
+            boolean hasHeaders = firstRow.getCell(0).getCellType() == CellType.STRING;
+            int offset = hasHeaders ? 1 : 0;
+
             int threadCnt = Runtime.getRuntime().availableProcessors();
             ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
             int totalRows = sheet.getLastRowNum() - sheet.getFirstRowNum() + 1;
             int rowsPerThread = totalRows / threadCnt;
             for (int i = 0; i < threadCnt; i++) {
-                int startRow = i * rowsPerThread + 1;
+                int startRow = offset + i * rowsPerThread;
                 int endRow = (i == threadCnt - 1) ? sheet.getLastRowNum() : startRow + rowsPerThread - 1;
                 executorService.submit(() -> processRows(sheet, science, maths, computer, english, startRow, endRow));
             }
