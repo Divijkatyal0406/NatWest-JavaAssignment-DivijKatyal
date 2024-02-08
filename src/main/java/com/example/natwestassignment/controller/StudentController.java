@@ -23,6 +23,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 public class StudentController {
@@ -33,7 +36,7 @@ public class StudentController {
     StudentRepository studentRepository;
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
-    public String studentStatus(@RequestParam("Enter Rollno for Student's Status") long rollNo) {
+    public String studentStatus(@RequestParam("Rollno") long rollNo) {
         if(studentRepository.findById(rollNo).isPresent()){
             return studentRepository.findById(rollNo).get().isEligible();
         }
@@ -41,7 +44,7 @@ public class StudentController {
     }
 
     @PostMapping(consumes = "multipart/form-data", value = "/upload")
-    public HttpEntity<ByteArrayResource> uploadFile(@RequestPart(value = "Students CSV File") MultipartFile file, @RequestParam("Enter Cutoff Marks for Science") long science, @RequestParam("Enter Cutoff Marks for Maths") long maths, @RequestParam("Enter Cutoff Marks for Computer") long computer, @RequestParam("Enter Cutoff Marks for English") long english) throws IOException {
+    public HttpEntity<ByteArrayResource> uploadFile(@RequestPart(value = "Students CSV File") MultipartFile file, @RequestPart("Enter Cutoff Marks for Science") long science, @RequestPart("Enter Cutoff Marks for Maths") long maths, @RequestPart("Enter Cutoff Marks for Computer") long computer, @RequestPart("Enter Cutoff Marks for English") long english) throws IOException {
         long fileName = file.getSize();
         System.out.println(fileName);
         try {
@@ -50,57 +53,22 @@ public class StudentController {
             Sheet sheet = workbook.getSheet(SHEET);
             Iterator<Row> rows = sheet.iterator();
 
-            int rowNumber = 0;
-            while (rows.hasNext()) {
-                Row currentRow = rows.next();
-                Iterator<Cell> cellsInRow = currentRow.iterator();
-                Student student = new Student();
-                int cellIdx = 0;
-                while (cellsInRow.hasNext()) {
-                    Cell currentCell = cellsInRow.next();
+            int threadCnt = Runtime.getRuntime().availableProcessors();
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
+            int totalRows = sheet.getLastRowNum() - sheet.getFirstRowNum() + 1;
+            int rowsPerThread = totalRows / threadCnt;
+            for (int i = 0; i < threadCnt; i++) {
+                int startRow = i * rowsPerThread + 1;
+                int endRow = (i == threadCnt - 1) ? sheet.getLastRowNum() : startRow + rowsPerThread - 1;
+                executorService.submit(() -> processRows(sheet, science, maths, computer, english, startRow, endRow));
+            }
 
-                    switch (cellIdx) {
-                        case 0:
-                            student.setRollNumber((long) currentCell.getNumericCellValue());
-                            break;
+            executorService.shutdown();
 
-                        case 1:
-                            student.setName(currentCell.getStringCellValue());
-                            break;
-
-                        case 2:
-                            student.setScienceMarks((long) currentCell.getNumericCellValue());
-                            break;
-
-                        case 3:
-                            student.setMathsMarks((long) currentCell.getNumericCellValue());
-                            break;
-
-                        case 4:
-                            student.setEnglishMarks((long) currentCell.getNumericCellValue());
-                            break;
-
-                        case 5:
-                            student.setComputerMarks((long) currentCell.getNumericCellValue());
-                            break;
-
-                        case 6:
-                            if(student.getScienceMarks()>science && student.getComputerMarks()>computer && student.getEnglishMarks()>english && student.getMathsMarks()>maths){
-                                currentCell.setCellValue("YES");
-                            }
-                            else currentCell.setCellValue("NO");
-                            student.setEligible(currentCell.getStringCellValue());
-                            break;
-
-                        default:
-                            break;
-                    }
-
-                    cellIdx++;
-                }
-                studentRepository.save(student);
-                students.add(student);
-
+            try {
+                executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
             OutputStream outputStream = new OutputStream() {
                 @Override
@@ -118,7 +86,59 @@ public class StudentController {
             header.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=updated_data.xlsx");
             return new HttpEntity<>(new ByteArrayResource(updatedExcelContent), header);
         } catch (IOException e) {
-            throw new RuntimeException("fail to parse Excel file: " + e.getMessage());
+            throw new RuntimeException("Fail to parse Excel file: " + e.getMessage());
+        }
+    }
+
+    private void processRows(Sheet sheet, long science, long maths, long computer, long english, int startRow, int endRow) {
+        for (int rowNum = startRow; rowNum <= endRow; rowNum++) {
+            Row currentRow = sheet.getRow(rowNum);
+            Iterator<Cell> cellsInRow = currentRow.iterator();
+            Student student = new Student();
+            int cellIdx = 0;
+            while (cellsInRow.hasNext()) {
+                Cell currentCell = cellsInRow.next();
+
+                switch (cellIdx) {
+                    case 0:
+                        student.setRollNumber((long) currentCell.getNumericCellValue());
+                        break;
+
+                    case 1:
+                        student.setName(currentCell.getStringCellValue());
+                        break;
+
+                    case 2:
+                        student.setScienceMarks((long) currentCell.getNumericCellValue());
+                        break;
+
+                    case 3:
+                        student.setMathsMarks((long) currentCell.getNumericCellValue());
+                        break;
+
+                    case 4:
+                        student.setEnglishMarks((long) currentCell.getNumericCellValue());
+                        break;
+
+                    case 5:
+                        student.setComputerMarks((long) currentCell.getNumericCellValue());
+                        break;
+
+                    case 6:
+                        if(student.getScienceMarks()>science && student.getComputerMarks()>computer && student.getEnglishMarks()>english && student.getMathsMarks()>maths){
+                            currentCell.setCellValue("YES");
+                        }
+                        else currentCell.setCellValue("NO");
+                        student.setEligible(currentCell.getStringCellValue());
+                        break;
+
+                    default:
+                        break;
+                }
+
+                cellIdx++;
+            }
+            studentRepository.save(student);
         }
     }
 }
