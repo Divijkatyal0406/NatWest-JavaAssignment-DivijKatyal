@@ -1,1 +1,1 @@
-# Natwest-JavaAssignment-DivijKatyal
+# NatWest-JavaAssignment-DivijKatyal
