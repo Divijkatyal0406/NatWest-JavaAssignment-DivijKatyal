@@ -44,7 +44,7 @@ public class StudentController {
     }
 
     @PostMapping(consumes = "multipart/form-data", value = "/upload")
-    public HttpEntity<ByteArrayResource> uploadFile(@RequestPart(value = "Students CSV File") MultipartFile file, @RequestPart("Enter Cutoff Marks for Science") long science, @RequestPart("Enter Cutoff Marks for Maths") long maths, @RequestPart("Enter Cutoff Marks for Computer") long computer, @RequestPart("Enter Cutoff Marks for English") long english) throws IOException {
+    public HttpEntity<ByteArrayResource> uploadFile(@RequestPart(value = "Students CSV File") MultipartFile file, @RequestParam("Enter Cutoff Marks for Science") long science, @RequestParam("Enter Cutoff Marks for Maths") long maths, @RequestParam("Enter Cutoff Marks for Computer") long computer, @RequestParam("Enter Cutoff Marks for English") long english) throws IOException {
         long fileName = file.getSize();
         System.out.println(fileName);
         try {
