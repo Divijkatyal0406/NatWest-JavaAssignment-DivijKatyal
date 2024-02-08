@@ -27,8 +27,6 @@ import java.util.List;
 @RestController
 public class StudentController {
 
-    List<Student> students = new ArrayList<Student>();
-
     static String SHEET = "Sheet1";
 
     @Autowired
@@ -36,10 +34,8 @@ public class StudentController {
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
     public String studentStatus(@RequestParam("Enter Rollno for Student's Status") long rollNo) {
-        for(Student s:students){
-            if(s.getRollNumber()==rollNo){
-                return s.isEligible();
-            }
+        if(studentRepository.findById(rollNo).isPresent()){
+            return studentRepository.findById(rollNo).get().isEligible();
         }
         return "NA";
     }
@@ -49,6 +45,7 @@ public class StudentController {
         long fileName = file.getSize();
         System.out.println(fileName);
         try {
+            List<Student> students = new ArrayList<Student>();
             Workbook workbook = new XSSFWorkbook(file.getInputStream());
             Sheet sheet = workbook.getSheet(SHEET);
             Iterator<Row> rows = sheet.iterator();
