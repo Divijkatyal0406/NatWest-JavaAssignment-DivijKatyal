@@ -14,6 +14,9 @@ mvn spring-boot:run
 ```
 Test endpoints at <b>http://localhost:8080/swagger-ui/index.html</b>
 
+## Architecture Diagram
+<img src="https://github.com/Divijkatyal0406/NatWest-JavaAssignment-DivijKatyal/blob/main/Architecture-diagram.png" width=900 height=350></img>
+
 # API Endpoints
 ## Endpoint1 - CSV processing according to Subject Cutoffs
 This endpoint does rapid processing for scholarship eligibility determination. I utilized parallel processing, to calculate available threads which concurrently handle multiple rows of student data. Through distributed row processing, the workload is efficiently divided among threads, optimizing resource utilization. Furthermore, I implemented streaming to ensure memory efficiency, enabling the handling of large CSV data in chunks without loading the entire dataset into memory.
