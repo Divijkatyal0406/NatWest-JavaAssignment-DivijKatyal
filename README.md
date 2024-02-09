@@ -36,7 +36,7 @@ CSV File with Students Data
 
 ### Response Body
 ```
-Updated CSV File with eligibility status as 'YES'/'NO'
+Updated CSV File with eligibility status column value as 'YES'/'NO'
 ```
 
 ## Endpoint2 - Student's Eligibility Check by Roll Number
@@ -54,7 +54,7 @@ value: INTEGER Rollno
 
 ### Response Body
 ```
-Eligibility status ('YES', 'NO') or 'NA'
+Eligibility status ('YES', 'NO') or 'NA' : String
 ```
 
 ## Tech Stack:<br>
