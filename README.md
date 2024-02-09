@@ -57,8 +57,8 @@ value: INTEGER Rollno
 Eligibility status ('YES', 'NO') or 'NA'
 ```
 
-Tech Stack:
-Spring Boot for Microservice architecture.
-Swagger for API documentation and endpoint testing.
-H2 as In-memory DB for storing students data.
+## Tech Stack:<br>
+Spring Boot for Microservice architecture.<br>
+Swagger for API documentation and endpoint testing.<br>
+H2 as In-memory DB for storing students data.<br>
 JUnit for writing and executing thorough unit tests.
