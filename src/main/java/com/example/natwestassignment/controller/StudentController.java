@@ -91,7 +91,7 @@ public class StudentController {
         }
     }
 
-    private void processRows(Sheet sheet, long science, long maths, long computer, long english, int startRow, int endRow) {
+    void processRows(Sheet sheet, long science, long maths, long computer, long english, int startRow, int endRow) {
         for (int rowNum = startRow; rowNum <= endRow; rowNum++) {
             Row currentRow = sheet.getRow(rowNum);
             Iterator<Cell> cellsInRow = currentRow.iterator();
