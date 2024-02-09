@@ -5,6 +5,8 @@ import com.example.natwestassignment.repository.StudentRepository;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -20,6 +22,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 @RestController
 public class StudentController {
 
+    private static final Logger logger = LoggerFactory.getLogger(StudentController.class);
     static String SHEET = "Sheet1";
 
     @Autowired
@@ -34,16 +38,25 @@ public class StudentController {
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
     public String studentStatus(@RequestParam("Rollno") long rollNo) {
-        if(studentRepository.findById(rollNo).isPresent()){
-            return studentRepository.findById(rollNo).get().isEligible();
+        try {
+            Optional<Student> optionalStudent = studentRepository.findById(rollNo);
+            if (optionalStudent.isPresent()) {
+                String eligibilityStatus = optionalStudent.get().isEligible();
+                logger.info("Student with RollNo {} found. Eligibility Status: {}", rollNo, eligibilityStatus);
+                return eligibilityStatus;
+            } else {
+                logger.info("Student with RollNo {} not found. Returning 'NA'", rollNo);
+                return "NA";
+            }
+        } catch (Exception e) {
+            logger.error("Error while fetching student status for RollNo {}: {}", rollNo, e.getMessage());
+            throw new RuntimeException("Error while fetching student status: " + e.getMessage());
         }
-        return "NA";
     }
 
     @PostMapping(consumes = "multipart/form-data", value = "/upload")
     public HttpEntity<ByteArrayResource> uploadFile(@RequestPart(value = "Students CSV File") MultipartFile file, @RequestParam("Enter Cutoff Marks for Science") long science, @RequestParam("Enter Cutoff Marks for Maths") long maths, @RequestParam("Enter Cutoff Marks for Computer") long computer, @RequestParam("Enter Cutoff Marks for English") long english) throws IOException {
-        long fileName = file.getSize();
-        System.out.println(fileName);
+        logger.info("Received file: {} with size: {}", file.getOriginalFilename(), file.getSize());
         try {
             List<Student> students = new ArrayList<Student>();
             Workbook workbook = new XSSFWorkbook(file.getInputStream());
@@ -87,6 +100,7 @@ public class StudentController {
             header.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=updated_data.xlsx");
             return new HttpEntity<>(new ByteArrayResource(updatedExcelContent), header);
         } catch (IOException e) {
+            logger.error("Failed to parse Excel file: {}", e.getMessage());
             throw new RuntimeException("Fail to parse Excel file: " + e.getMessage());
         }
     }
@@ -139,6 +153,7 @@ public class StudentController {
 
                 cellIdx++;
             }
+            logger.error("New student added with RollNo {}", student.getRollNumber());
             studentRepository.save(student);
         }
     }
