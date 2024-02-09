@@ -153,7 +153,7 @@ public class StudentController {
 
                 cellIdx++;
             }
-            logger.error("New student added with RollNo {}", student.getRollNumber());
+            logger.info("New student added with RollNo {}", student.getRollNumber());
             studentRepository.save(student);
         }
     }
