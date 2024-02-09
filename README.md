@@ -6,6 +6,14 @@ Checkout Deployed Service at <b>(Note: Loading may take 30-50 seconds)</b>: http
 
 You can go through a concise demo video, to experience efficient CSV processing and seamless student status checks in action.- https://drive.google.com/file/d/1HjIhNJOwnArdPqQCGv0hjzpcAxc28XVS/view?usp=sharing
 
+## Installation - To Launch the API server locally:
+```
+git clone https://github.com/Divijkatyal0406/NatWest-JavaAssignment-DivijKatyal.git
+cd NatWest-JavaAssignment-DivijKatyal
+mvn spring-boot:run
+```
+Test endpoints at <b>http://localhost:8080/swagger-ui/index.html</b>
+
 # API Endpoints
 ## Endpoint1 - CSV processing according to Subject Cutoffs
 This endpoint does rapid processing for scholarship eligibility determination. I utilized parallel processing, to calculate available threads which concurrently handle multiple rows of student data. Through distributed row processing, the workload is efficiently divided among threads, optimizing resource utilization. Furthermore, I implemented streaming to ensure memory efficiency, enabling the handling of large CSV data in chunks without loading the entire dataset into memory.
