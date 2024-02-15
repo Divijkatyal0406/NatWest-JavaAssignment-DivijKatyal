@@ -46,60 +46,46 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public HttpEntity<ByteArrayResource> processUpload(MultipartFile file, long science, long maths, long computer, long english) throws IOException {
-        try {
-            Workbook workbook = new XSSFWorkbook(file.getInputStream());
-            Sheet sheet = workbook.getSheetAt(0);
-            Iterator<Row> rows = sheet.iterator();
+        Workbook workbook = new XSSFWorkbook(file.getInputStream());
+        Sheet sheet = workbook.getSheetAt(0);
+        Iterator<Row> rows = sheet.iterator();
 
-            Row firstRow = rows.next();
-            boolean hasHeaders = firstRow.getCell(0).getCellType() == CellType.STRING;
-            int offset = hasHeaders ? 1 : 0;
+        Row firstRow = rows.next();
+        boolean hasHeaders = firstRow.getCell(0).getCellType() == CellType.STRING;
+        int offset = hasHeaders ? 1 : 0;
 
-            int threadCnt = Runtime.getRuntime().availableProcessors();
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
-            int totalRows = sheet.getLastRowNum() - sheet.getFirstRowNum() + 1;
-            int rowsPerThread = totalRows / threadCnt;
-            for (int i = 0; i < threadCnt; i++) {
-                int startRow = offset + i * rowsPerThread;
-                int endRow = (i == threadCnt - 1) ? sheet.getLastRowNum() : startRow + rowsPerThread - 1;
-                executorService.submit(() -> processRows(sheet, science, maths, computer, english, startRow, endRow));
-            }
-
-            executorService.shutdown();
-
-            try {
-                executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            return generateHttpResponse(workbook);
-        } catch (IOException e) {
-            logger.error("Got "+e);
-            return handleIOException();
+        int threadCnt = Runtime.getRuntime().availableProcessors();
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
+        int totalRows = sheet.getLastRowNum() - sheet.getFirstRowNum() + 1;
+        int rowsPerThread = totalRows / threadCnt;
+        for (int i = 0; i < threadCnt; i++) {
+            int startRow = offset + i * rowsPerThread;
+            int endRow = (i == threadCnt - 1) ? sheet.getLastRowNum() : startRow + rowsPerThread - 1;
+            executorService.submit(() -> processRows(sheet, science, maths, computer, english, startRow, endRow));
         }
-    }
 
-    private HttpEntity<ByteArrayResource> generateHttpResponse(Workbook workbook) {
+        executorService.shutdown();
+
         try {
-            ByteArrayOutputStream updatedExcelStream = new ByteArrayOutputStream();
-            workbook.write(updatedExcelStream);
-            workbook.close();
-
-            byte[] updatedExcelContent = updatedExcelStream.toByteArray();
-            HttpHeaders header = new HttpHeaders();
-            header.setContentType(new MediaType("application", "force-download"));
-            header.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=updated_data.xlsx");
-            return new HttpEntity<>(new ByteArrayResource(updatedExcelContent), header);
-        } catch (IOException e) {
-            throw new RuntimeException("Error while creating the output stream: " + e.getMessage());
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
+
+        return generateHttpResponse(workbook);
     }
 
-    private HttpEntity<ByteArrayResource> handleIOException() {
-        return new HttpEntity<>(new ByteArrayResource(new byte[0]));
-    }
+    private HttpEntity<ByteArrayResource> generateHttpResponse(Workbook workbook) throws IOException {
+        ByteArrayOutputStream updatedExcelStream = new ByteArrayOutputStream();
+        workbook.write(updatedExcelStream);
+        workbook.close();
 
+        byte[] updatedExcelContent = updatedExcelStream.toByteArray();
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(new MediaType("application", "force-download"));
+        header.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=updated_data.xlsx");
+        return new HttpEntity<>(new ByteArrayResource(updatedExcelContent), header);
+    }
 
     void processRows(Sheet sheet, long science, long maths, long computer, long english, int startRow, int endRow) {
         for (int rowNum = startRow; rowNum <= endRow; rowNum++) {
