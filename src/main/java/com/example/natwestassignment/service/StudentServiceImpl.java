@@ -8,9 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,12 +26,10 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class StudentServiceImpl implements StudentService {
 
+    private static final Logger logger = LoggerFactory.getLogger(StudentServiceImpl.class);
+    static String SHEET = "Sheet1";
     @Autowired
     private StudentRepository studentRepository;
-
-    private static final Logger logger = LoggerFactory.getLogger(StudentServiceImpl.class);
-
-    static String SHEET = "Sheet1";
 
     @Override
     public String getStudentStatus(long rollNo) {
@@ -82,26 +78,34 @@ public class StudentServiceImpl implements StudentService {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            OutputStream outputStream = new OutputStream() {
-                @Override
-                public void write(int b) throws IOException {
 
-                }
-            };
-            ByteArrayOutputStream updatedExcelStream = new ByteArrayOutputStream();
-            workbook.write(updatedExcelStream);
-            workbook.close();
+            try (
+                    OutputStream outputStream = new OutputStream() {
+                        @Override
+                        public void write(int b) throws IOException {
 
-            byte[] updatedExcelContent = updatedExcelStream.toByteArray();
-            HttpHeaders header = new HttpHeaders();
-            header.setContentType(new MediaType("application", "force-download"));
-            header.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=updated_data.xlsx");
-            return new HttpEntity<>(new ByteArrayResource(updatedExcelContent), header);
+                        }
+                    }
+            ) {
+                ByteArrayOutputStream updatedExcelStream = new ByteArrayOutputStream();
+                workbook.write(updatedExcelStream);
+                workbook.close();
+
+                byte[] updatedExcelContent = updatedExcelStream.toByteArray();
+                HttpHeaders header = new HttpHeaders();
+                header.setContentType(new MediaType("application", "force-download"));
+                header.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=updated_data.xlsx");
+                return new HttpEntity<>(new ByteArrayResource(updatedExcelContent), header);
+            } catch (IOException e) {
+                logger.error("Error while creating the output stream: {}", e.getMessage());
+                throw new RuntimeException("Error while creating the output stream: " + e.getMessage());
+            }
         } catch (IOException e) {
             logger.error("Failed to parse Excel file: {}", e.getMessage());
-            throw new RuntimeException("Fail to parse Excel file: " + e.getMessage());
+            return new HttpEntity<>(new ByteArrayResource(new byte[0]));
         }
     }
+
 
     void processRows(Sheet sheet, long science, long maths, long computer, long english, int startRow, int endRow) {
         for (int rowNum = startRow; rowNum <= endRow; rowNum++) {
