@@ -75,7 +75,8 @@ public class StudentServiceImpl implements StudentService {
 
             return generateHttpResponse(workbook);
         } catch (IOException e) {
-            return handleIOException(e);
+            logger.error("Got "+e);
+            return handleIOException();
         }
     }
 
@@ -95,7 +96,7 @@ public class StudentServiceImpl implements StudentService {
         }
     }
 
-    private HttpEntity<ByteArrayResource> handleIOException(IOException e) {
+    private HttpEntity<ByteArrayResource> handleIOException() {
         return new HttpEntity<>(new ByteArrayResource(new byte[0]));
     }
 
