@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 public class StudentServiceImpl implements StudentService {
 
     private static final Logger logger = LoggerFactory.getLogger(StudentServiceImpl.class);
-    static String SHEET = "Sheet1";
     @Autowired
     private StudentRepository studentRepository;
 
@@ -49,7 +48,7 @@ public class StudentServiceImpl implements StudentService {
     public HttpEntity<ByteArrayResource> processUpload(MultipartFile file, long science, long maths, long computer, long english) throws IOException {
         try {
             Workbook workbook = new XSSFWorkbook(file.getInputStream());
-            Sheet sheet = workbook.getSheet(SHEET);
+            Sheet sheet = workbook.getSheetAt(0);
             Iterator<Row> rows = sheet.iterator();
 
             Row firstRow = rows.next();
@@ -92,7 +91,6 @@ public class StudentServiceImpl implements StudentService {
             header.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=updated_data.xlsx");
             return new HttpEntity<>(new ByteArrayResource(updatedExcelContent), header);
         } catch (IOException e) {
-            logger.error("Error while creating the output stream: {}", e.getMessage());
             throw new RuntimeException("Error while creating the output stream: " + e.getMessage());
         }
     }
