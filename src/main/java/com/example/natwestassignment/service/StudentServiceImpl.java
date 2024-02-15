@@ -44,7 +44,6 @@ public class StudentServiceImpl implements StudentService {
                 return "NA";
             }
         } catch (Exception e) {
-            logger.error("Error while fetching student status for RollNo {}: {}", rollNo, e.getMessage());
             throw new RuntimeException("Error while fetching student status: " + e.getMessage());
         }
     }
@@ -52,7 +51,6 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public HttpEntity<ByteArrayResource> processUpload(MultipartFile file, long science, long maths, long computer, long english) throws IOException {
         try {
-            List<Student> students = new ArrayList<Student>();
             Workbook workbook = new XSSFWorkbook(file.getInputStream());
             Sheet sheet = workbook.getSheet(SHEET);
             Iterator<Row> rows = sheet.iterator();
@@ -79,14 +77,7 @@ public class StudentServiceImpl implements StudentService {
                 Thread.currentThread().interrupt();
             }
 
-            try (
-                    OutputStream outputStream = new OutputStream() {
-                        @Override
-                        public void write(int b) throws IOException {
-
-                        }
-                    }
-            ) {
+            try{
                 ByteArrayOutputStream updatedExcelStream = new ByteArrayOutputStream();
                 workbook.write(updatedExcelStream);
                 workbook.close();
@@ -101,7 +92,6 @@ public class StudentServiceImpl implements StudentService {
                 throw new RuntimeException("Error while creating the output stream: " + e.getMessage());
             }
         } catch (IOException e) {
-            logger.error("Failed to parse Excel file: {}", e.getMessage());
             return new HttpEntity<>(new ByteArrayResource(new byte[0]));
         }
     }

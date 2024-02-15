@@ -17,11 +17,11 @@ public class StudentController {
     @Autowired
     private StudentService studentService;
 
-    @RequestMapping(value = "/status", method = RequestMethod.GET)
+    @GetMapping(value = "/status")
     public String studentStatus(@RequestParam("Rollno") long rollNo) {
         try {
             return studentService.getStudentStatus(rollNo);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             logger.error("Error while fetching student status for RollNo {}: {}", rollNo, e.getMessage());
             throw new RuntimeException("Error while fetching student status: " + e.getMessage());
         }
@@ -29,7 +29,7 @@ public class StudentController {
 
     @PostMapping(consumes = "multipart/form-data", value = "/upload")
     public HttpEntity<ByteArrayResource> uploadFile(@RequestPart(value = "Students CSV File") MultipartFile file, @RequestParam("Enter Cutoff Marks for Science") long science, @RequestParam("Enter Cutoff Marks for Maths") long maths, @RequestParam("Enter Cutoff Marks for Computer") long computer, @RequestParam("Enter Cutoff Marks for English") long english) throws IOException {
-        logger.info("Received file: {} with size: {}", file.getOriginalFilename(), file.getSize());
+        logger.info("Received uploaded file");
         return studentService.processUpload(file, science, maths, computer, english);
 
     }
