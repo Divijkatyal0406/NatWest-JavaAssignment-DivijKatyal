@@ -14,10 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -77,23 +74,31 @@ public class StudentServiceImpl implements StudentService {
                 Thread.currentThread().interrupt();
             }
 
-            try{
-                ByteArrayOutputStream updatedExcelStream = new ByteArrayOutputStream();
-                workbook.write(updatedExcelStream);
-                workbook.close();
-
-                byte[] updatedExcelContent = updatedExcelStream.toByteArray();
-                HttpHeaders header = new HttpHeaders();
-                header.setContentType(new MediaType("application", "force-download"));
-                header.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=updated_data.xlsx");
-                return new HttpEntity<>(new ByteArrayResource(updatedExcelContent), header);
-            } catch (IOException e) {
-                logger.error("Error while creating the output stream: {}", e.getMessage());
-                throw new RuntimeException("Error while creating the output stream: " + e.getMessage());
-            }
+            return generateHttpResponse(workbook);
         } catch (IOException e) {
-            return new HttpEntity<>(new ByteArrayResource(new byte[0]));
+            return handleIOException(e);
         }
+    }
+
+    private HttpEntity<ByteArrayResource> generateHttpResponse(Workbook workbook) {
+        try {
+            ByteArrayOutputStream updatedExcelStream = new ByteArrayOutputStream();
+            workbook.write(updatedExcelStream);
+            workbook.close();
+
+            byte[] updatedExcelContent = updatedExcelStream.toByteArray();
+            HttpHeaders header = new HttpHeaders();
+            header.setContentType(new MediaType("application", "force-download"));
+            header.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=updated_data.xlsx");
+            return new HttpEntity<>(new ByteArrayResource(updatedExcelContent), header);
+        } catch (IOException e) {
+            logger.error("Error while creating the output stream: {}", e.getMessage());
+            throw new RuntimeException("Error while creating the output stream: " + e.getMessage());
+        }
+    }
+
+    private HttpEntity<ByteArrayResource> handleIOException(IOException e) {
+        return new HttpEntity<>(new ByteArrayResource(new byte[0]));
     }
 
 
