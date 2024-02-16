@@ -31,6 +31,5 @@ public class StudentController {
     public HttpEntity<ByteArrayResource> uploadFile(@RequestPart(value = "Students CSV File") MultipartFile file, @RequestParam("Enter Cutoff Marks for Science") long science, @RequestParam("Enter Cutoff Marks for Maths") long maths, @RequestParam("Enter Cutoff Marks for Computer") long computer, @RequestParam("Enter Cutoff Marks for English") long english) throws IOException {
         logger.info("Received uploaded file");
         return studentService.processUpload(file, science, maths, computer, english);
-
     }
 }

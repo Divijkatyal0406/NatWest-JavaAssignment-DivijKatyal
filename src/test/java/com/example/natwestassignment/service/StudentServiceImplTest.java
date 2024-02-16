@@ -46,7 +46,7 @@ class StudentServiceTests {
         MultipartFile mockFile = new MockMultipartFile(
                 "file",
                 file.getName(),
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // Set the content type for Excel files
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 new FileInputStream(file)
         );
         long science = 70L;

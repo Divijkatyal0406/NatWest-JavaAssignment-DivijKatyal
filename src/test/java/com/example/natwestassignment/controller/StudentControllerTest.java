@@ -25,9 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class StudentControllerTest {
 
     @Autowired
-    private StudentServiceImpl studentService;
-
-    @Autowired
     private StudentController studentController;
 
     @Autowired
@@ -38,7 +35,7 @@ public class StudentControllerTest {
         long rollNo = 1234;
         Student expectedStudent = new Student(rollNo, "Divij Katyal", 75, 80, 90, 85, "YES");
         studentRepository.save(expectedStudent);
-        String actualStatus = studentService.getStudentStatus(rollNo);
+        String actualStatus = studentController.studentStatus(rollNo);
         assertEquals("YES", actualStatus);
     }
 
@@ -48,14 +45,14 @@ public class StudentControllerTest {
         MultipartFile mockFile = new MockMultipartFile(
                 "file",
                 file.getName(),
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // Set the content type for Excel files
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 new FileInputStream(file)
         );
         long science = 70L;
         long maths = 75L;
         long computer = 80L;
         long english = 85L;
-        HttpEntity<ByteArrayResource> result = studentService.processUpload(mockFile, science, maths, computer, english);
+        HttpEntity<ByteArrayResource> result = studentController.uploadFile(mockFile, science, maths, computer, english);
         assertEquals("application/force-download", result!=null?result.getHeaders().getContentType().toString():"");
     }
 }
